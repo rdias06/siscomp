@@ -17,6 +17,7 @@ class Usuario:
         u.senha = raw_input("Digite a senha.\n")
         u.email = raw_input("Digite o e-mail.\n")
         dados = []
+        dados.append('cadastro')
         dados.append(u.nome)
         dados.append(u.senha)
         dados.append(u.email)
@@ -48,19 +49,23 @@ class Usuario:
             except Exception :
                 print ('opcao inválida, você voltou para o menu principal.\n')
                 u.menu1()
+
     def fazerlogin(self):
         u.nome = raw_input("Digite seu nome.\n")
         u.senha = raw_input("Digite sua senha.\n")
         dados = []
+        dados.append('fazerlogin')
         dados.append(u.nome)
         dados.append(u.senha)
         sep = ';'
-        dados2 = sep.join(dados[1:2])
+        dados2 = sep.join(dados[1:3])
         s.sendall(str(dados2))
         confirmacao = s.recv(1024)
-        if confirmacao == 'ok':
-            u.menu2()
-        if confirmacao != 'ok':
+        if confirmacao == 'emuso':
+            print('Conta já está online em outro computador.\n')
+            print ("Você voltou para o menu principal.\n")
+            u.menu1()
+        if confirmacao == 'naoexiste' :
             try:
                 print ("Nome ou senha errados.\n")
                 print ("Digite:\n")
@@ -76,9 +81,15 @@ class Usuario:
             except Exception:
                 print ("opcao invalida, voce voltou para o menu principal.\n")
                 u.menu1()
-    def criargrupo(self):
-        nomegrupo = raw_input("Digite o nome do grupo que deseja criar.\n")
-        u.criargrupoprincipal(nomegrupo)
+        if confirmacao == 'semmsg' :
+            print('Você está logado.\n')
+            print('Você não recebeu mensagens enquanto esteve offline.\n')
+            u.menu2()
+        else :
+            mensagem = []
+            mensagem[:] = confirmacao.split(';')
+            print ('Enquanto você esteve offline,\n')
+            print(mensagem[1]' disse 'mensagem[2]'\n')                                 ###################nao sei o que ta errado
 
     def criargrupoprincipal(nomegrupo):
         l = []
@@ -88,20 +99,118 @@ class Usuario:
         while i < n:
             emailamigo = raw_input("Digite o email de um amigo que deseja adicionar.\n")
             l.append(emailamigo)
-            i = i +1
+            i = i + 1
         sep = ';'
         dados = sep.join(l)
         s.send(str(dados))
         confirmacao = s.recv(1024)
         if confirmacao == 'ok':
             print ('Grupo criado com sucesso')
-        if confirmacao == 'erro' :
+            u.menu2()
+        if confirmacao == 'erro':
             print('Já existe um grupo com esse nome, tente novamente')
             u.criargrupo()
 
+    def criargrupo(self):
+        nomegrupo = raw_input("Digite o nome do grupo que deseja criar.\n")
+        u.criargrupoprincipal(nomegrupo)
+
+    def menuaddaogrupo2(self):
+        try:
+            print ('Você nao possui esse email na sua agenda de contatos.\n')
+            print ("Digite 1 para tentar de novo.\n")
+            print ("Digite 2 para voltar ao menu principal.\n")
+            decisao = raw_input("\n")
+            if (int(decisao) != 1) and (int(decisao) != 2):
+                raise
+            if int(decisao) == 1:
+                u.addaogrupo()
+            if int(decisao) == 2:
+                u.menu2()
+        except Exception:
+            print ("opcao invalida, tente novamente.\n")
+            u.menuexcluirgrupo()
+
+    def menuaddaogrupo(self):
+         try:
+            print ('Esse usuario já está no grupo.\n')
+            print ("Digite 1 para tentar de novo.\n")
+            print ("Digite 2 para voltar ao menu principal.\n")
+            decisao = raw_input("\n")
+            if (int(decisao) != 1) and (int(decisao) != 2):
+                raise
+            if int(decisao) == 1:
+                u.addaogrupo()
+            if int(decisao) == 2:
+                u.menu2()
+         except Exception :
+            print ("opcao invalida, tente novamente.\n")
+            u.menuaddaogrupo()
+
+    def addaogrupo(self):
+        try:
+            cont = raw_input('Qual o email do amigo que deseja adiconar?')
+            grupo = raw_input('Para qual grupo desefa adiciona-lo?')
+            identificador = 'addaogrupo'
+            l = []
+            l.append(identificador)
+            l.append(cont)
+            l.append(grupo)
+            sep = ';'
+            info = sep.join(l)
+            s.sendall(str(info))
+            confirmacao = s.recv(1024)
+            if confirmacao == 'jaesta':
+                u.menuaddaogrupo()
+            if confirmacao == 'ok':
+                print ('Seu amigo foi adicionado com sucesso.\n')
+            if confirmacao == 'naoagenda':
+                u.menuaddaogrupo2()
+        except Exception:
+            print ('erro')
+
+    def menuexcluirgrupo(self):
+        try:
+            print ('Você não criou o grupo, logo você não pode excluir-lo.\n')
+            print ("Digite 1 para tentar de novo.\n")
+            print ("Digite 2 para voltar ao menu principal.\n")
+            decisao = raw_input("\n")
+            if (int(decisao) != 1) and (int(decisao) != 2):
+                raise
+            if int(decisao) == 1:
+                u.excluirgrupo()
+            if int(decisao) == 2:
+                u.menu2()
+        except Exception:
+            print ("opcao invalida, tente novamente.\n")
+            u.menuexcluirgrupo()
+
+    def excluirgrupo(self):
+        print ('ATENÇÂO, VOCÊ SÒ PODE EXCLUIR UM GRUPO QUE VOCE CRIOU!!')
+        info = raw_input('Qual grupo você deseja excluir?')
+        identificador = 'excluirgrupo'
+        l = []
+        l.append(identificador)
+        l.append(info)
+        sep = ';'
+        data = sep.join(l)
+        s.sendall(str(data))
+        confirmacao = s.recv(1024)
+        if confirmacao == 'naocriou':
+            u.menuexcluirgrupo()
+        else:
+            print ('Grupo excluido com sucesso.\n')
+
+
     def adicionarcontato(self):
-        add = raw_input("Qual o email adicionar a sua lista de contatos?\n")
-        s.sendall(add)
+        add = raw_input("Qual o email adicionar a agenda?\n")
+        identificador = 'adicionarcontato'
+        l = []
+        l.append(identificador)
+        l.append(add)
+        sep = ';'
+        info = sep.join(l)
+        s.sendall(info)
         confirmacao = s.recv(1024)
         if confirmacao == 'ok':
             print ("Contato adicionado com sucesso.\n")
@@ -139,54 +248,59 @@ class Usuario:
                     u.adicionarcontato()
             except Exception:
                 u.menu2()
+
+
     def mensagemamigo(self):
-        cont = raw_input("Digite o email do amigo que quer mandar uma mensagem.\n")
-        s.sendall(cont)
+        emailamigo = raw_input("Digite o email do amigo que quer mandar uma mensagem.\n")
+        mensagem = raw_input("Digite sua mensagem\n")
+        identificador = 'mensagemamigo'
+        l = []
+        l.append(identificador)
+        l.append(emailamigo)
+        l.append(mensagem)
+        sep = ';'
+        info = sep.join(l)
+        s.sendall(str(info))
         confirmacao = s.recv(1024)
-        if confirmacao == 1:
-            msg = []
-            msg.append('consulta')
-            msg.append(cont)
-            mensagem = raw_input("Digite sua mensagem\n")
-            msg.append(mensagem)
-            sep = ';'
-            dados = sep.join(msg)
-            s.send(str(dados))
-        else:
+        if confirmacao == 'naoagenda':
             try:
-                print ("Nao foi encontrado esse contato na sua agenda.\n")
-                print ("Digite 1 para fazer tentar novamente")
-                print ("Digite 2 para adicionar um contato na sua agenda\n")
-                print ("Digite outro valor para voltar ao menu principal.\n")
-                decisao = raw_input("\n")
-                if (int(decisao) != 1) and (int(decisao) != 2):
+                print ('Você não possui esse email na sua agenda.\n')
+                print ("Digite 1 tentar novamente.\n")
+                print ('Digite 2 para adicionar esse email a sua agenda.\n')
+                print ("Digite outra coisa para voltar ao menu principal.\n")
+                decisao2 = raw_input("\n")
+                if int(decisao2) != 1 and int(decisao2) != 2 :
                     raise
-                if int(decisao) == 1:
+                if int(decisao2) == 1:
                     u.mensagemamigo()
-                if int(decisao) == 2:
+                if int(decisao2) == 2:
                     u.adicionarcontato()
             except Exception:
+                print ('opcao inválita, você voltou ao menu principal.\n')
                 u.menu2()
+        if confirmacao == 'ok':
+            print ('Mensagem enviada.\n')
+            u.menu2()
+        if confirmacao == 'amigooffline':
+            print ('Amigo offline, quando ele entrar ele reseberá sua mensagem.\n')
+            u.menu2()
+
+
     def mensagemgrupo(self):
-        cont = raw_input("Para qual grupo deseja mandar mensagem?\n")
-        s.sendall(cont)
+        grupo = raw_input("Para qual grupo deseja mandar mensagem?\n")
+        identificador = 'mensagemgrupo'
+        mensagem = raw_input("Digite sua mensagem\n")
+        l = []
+        l.append(identificador)
+        l.append(grupo)
+        l.append(mensagem)
+        sep = ';'
+        info = sep.join(l)
+        s.sendall(str(info))
         confirmacao = s.recv(1024)
-        if confirmacao == 1:
-            msg = raw_input("Digite sua mensagem para o grupo\n")  #como botar o nome do grupo dentro do print?
-            s.sendall(msg)
+        if confirmacao == 'naoestanogrupo':
             try:
-                print ("Digite 1 para mandar outra mensagem para o grupo.\n")
-                print ("Digite outro valor para voltar ao menu principal.\n")
-                decisao = raw_input("\n")
-                if int(decisao) != 1:
-                    raise
-                if int(decisao) == 1:
-                    u.mensagemgrupo()
-            except Exception:
-                u.menu2()
-        else:
-            try:
-                print ("Esse grupo nao existe.\n")
+                print ('Você não está no grupo.\n')
                 print ("Digite 1 para fazer tentar novamente.\n")
                 print ("Digite 2 para criar um grupo novo.\n")
                 print ("Digite outro valor para voltar ao menu principal.\n")
@@ -199,21 +313,48 @@ class Usuario:
                     u.criargrupo()
             except Exception:
                 u.menu2()
+        if confirmacao == 'ok' :
+            print ('Todos os membros do grupo que estão online receberam e quem está offline irá ver quando entrar na conta.\n')
+            u.menu2()
+
+    def sair(self):
+        try:
+            print ('Tem certeza que deseja sair da sua conta?')
+            print ("Digite sim sair.\n")
+            print ("Digite não para voltar ao menu principal.\n")
+            decisao2 = raw_input("\n")
+            if (int(decisao2) != 'sim') and (int(decisao2) != 'não'):
+                raise
+            if int(decisao2) == 'sim':
+                identificador = 'sair'
+                s.sendall(str(identificador))
+                confirmacao = s.recv(1024)
+                if confirmacao == 'ok'
+                    print ('Você saiu da sua conta.\n')
+                    u.menu1()
+            if int(decisao2) == 'não':
+                u.menu2()
+        except Exception:
+            u.menu2()
+def fecharsocket(self):                                        ############isso ta errado???
+    s.close()
+
 
 def menu1(self):
     try:
         print ("Digite:\n")
         print ("1 para fazer login.\n")
         print ("2 para se cadastrar.\n")
+        print ('3 para fecha a conexão.\n')
         decisao = raw_input("\n")
-        if (int(decisao) != 1) and (int(decisao) != 2):
+        if (int(decisao) != 1) and (int(decisao) != 2) and (int(decisao) != 3):
             raise
         if int(decisao) == 1:
-            s.sendall("fazerlogin")
             u.fazerlogin()
         if int(decisao) == 2:
-            s.sendall("cadastrar")
             u.fazercadastro()
+        if int(decisao) == 3:
+            fecharsocket()
     except Exception:
         print ("opcao invalida, tente novamente.\n")
         u.menu1()
@@ -221,25 +362,30 @@ def menu1(self):
 def menu2(self):
     try:
         print ("Digite:\n")
-        print ("1 para adicionar um contato\n")
-        print ("2 para conversar com um amigo\n")
-        print ("3 para criar um grupo de amigos\n")
-        print ("4 para conversar com um grupo de amigos")
+        print ("1 para adicionar um contato.\n")
+        print ("2 para conversar com um amigo.\n")
+        print ("3 para criar um grupo.\n")
+        print ("4 para conversar com um grupo.\n")
+        print ('5 para adicionar um contato à um grupo.\n')
+        print ('6 para excluir um grupo que você criou.\n')
+        print ("7 para sair da sua conta.\n")
         decisao = raw_input("\n")
-        if (int(decisao) != 1) and (int(decisao) != 2) and (int(decisao) != 3) and (input(decisao) != 4):
+        if (int(decisao) != 1) and (int(decisao) != 2) and (int(decisao) != 3) and (input(decisao) != 4) and (input(decisao) != 5) and (input(decisao) != 6) and (input(decisao) != 7):
             raise
         if int(decisao) == 1:
-            s.sendall("adicionarcontato")
             u.adicionarcontato()
         if int(decisao) == 2:
-            s.sendall("mensagemamigo")
             u.mensagemamigo()
         if int(decisao) == 3:
-            s.sendall("criargrupo")
             u.criargrupo()
         if int(decisao) == 4:
-            s.sendall("mensagemgrupo")
             u.mensagemgrupo()
+        if int(decisao) == 5:
+            u.addaogrupo()
+        if int(decisao) == 6:
+            u.excluirgrupo()
+        if int(decisao) == 7:
+            u.excluirgrupo()
     except Exception:
         print ("opcao invalida, tente novamente")
         u.menu2()
