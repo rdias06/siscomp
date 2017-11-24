@@ -3,6 +3,7 @@
 #!/usr/bin/python
 
 import socket
+
 from multiprocessing import Process
 from threading import Thread
 
@@ -89,9 +90,13 @@ class Usuario:
             mensagem = []
             mensagem[:] = confirmacao.split(';')
             print ('Enquanto você esteve offline,\n')
-            print(mensagem[1]' disse 'mensagem[2]'\n')                                 ###################nao sei o que ta errado
+            print(mensagem[1])
+            print('disse')
+            print (mensagem[2])
+            print ('\n')###################nao sei o que ta errado
 
     def criargrupoprincipal(nomegrupo):
+        i = 0
         l = []
         l.append(nomegrupo)
         print ("Atencao! Você só pode adicionar amigos que estão na sua agenda de contatos.\n")
@@ -317,6 +322,36 @@ class Usuario:
             print ('Todos os membros do grupo que estão online receberam e quem está offline irá ver quando entrar na conta.\n')
             u.menu2()
 
+    def excluirconta(self):
+        try:
+            print ('Tem certeza que deseja excluir sua conta?')
+            print ("Digite sim sair.\n")
+            print ("Digite não para voltar ao menu principal.\n")
+            decisao2 = raw_input("\n")
+            if (int(decisao2) != 'sim') and (int(decisao2) != 'não'):
+                raise
+            if int(decisao2) == 'sim':
+                identificador = 'excluirconta'
+                email = raw_input('Digite seu email para exlucir sua conta.\n')
+                senha = raw_input('Digite sua senha para excluir sua conta.\n')
+                l = []
+                l.append(identificador)
+                l.append(email)
+                l.append(senha)
+                sep = ';'
+                info = sep.join(l)
+                s.sendall(str(info))
+                confirmacao = s.recv(1024)
+                if confirmacao == 'ok' :
+                    print ('Você excluiu sua conta.\n')
+                    u.menu1()
+            if int(decisao2) == 'senhaerrada':
+                print ('Senha errada, você voltou ao menu principal.\n')
+                u.menu2()
+        except Exception:
+            print ('Opção inválida, você voltou ao menu principal.\n')
+            u.menu2()
+
     def sair(self):
         try:
             print ('Tem certeza que deseja sair da sua conta?')
@@ -329,7 +364,7 @@ class Usuario:
                 identificador = 'sair'
                 s.sendall(str(identificador))
                 confirmacao = s.recv(1024)
-                if confirmacao == 'ok'
+                if confirmacao == 'ok':
                     print ('Você saiu da sua conta.\n')
                     u.menu1()
             if int(decisao2) == 'não':
@@ -369,8 +404,11 @@ def menu2(self):
         print ('5 para adicionar um contato à um grupo.\n')
         print ('6 para excluir um grupo que você criou.\n')
         print ("7 para sair da sua conta.\n")
+        print ("8 para mandar um arquivo para um amigo.\n")
+        print ("9 para mandar um arquivo para um grupo.\n")
+        print ("10 para excluir sua conta.\n")
         decisao = raw_input("\n")
-        if (int(decisao) != 1) and (int(decisao) != 2) and (int(decisao) != 3) and (input(decisao) != 4) and (input(decisao) != 5) and (input(decisao) != 6) and (input(decisao) != 7):
+        if (int(decisao) != 1) and (int(decisao) != 2) and (int(decisao) != 3) and (input(decisao) != 4) and (input(decisao) != 5) and (input(decisao) != 6) and (input(decisao) != 7) and (input(decisao) != 8) and (input(decisao) != 9) and (input(decisao) != 10):
             raise
         if int(decisao) == 1:
             u.adicionarcontato()
@@ -386,6 +424,12 @@ def menu2(self):
             u.excluirgrupo()
         if int(decisao) == 7:
             u.excluirgrupo()
+        if int(decisao) == 8:
+
+        if int(decisao) == 9:
+
+        if int(decisao) == 10:
+            u.excluirconta()
     except Exception:
         print ("opcao invalida, tente novamente")
         u.menu2()

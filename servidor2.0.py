@@ -6,7 +6,10 @@ import socket
 from multiprocessing import Process
 from threading import Thread
 
-def adicionarcontato(conn, data, identificador2) :
+
+
+def adicionarcontato(conn, data) :
+    global identificador1, identificador2
     a = 0
     bancodedados2 = open('usuarios.txt', 'r')
     for linha in bancodedados2:
@@ -46,6 +49,7 @@ def adicionarcontato(conn, data, identificador2) :
             print 'erro'
 
 def fazercadastro(conn, data):
+    global identificador1, identificador2
     try:
         i = 0
         bancodedados = open("usuarios.txt","r")
@@ -71,7 +75,8 @@ def fazercadastro(conn, data):
     except Exception :
         conn.sendall('erro')
 
-def mensagensoffline(identificador2):
+def mensagensoffline():
+    global identificador1, identificador2
     i = 0
     msg = open('mensagensoffline.txt', 'r')
     msg2 = open('mensagensoffline2.txt', 'w')
@@ -117,7 +122,7 @@ def fazerlogin(conn, data):
                     identificador2 = email
                     usuariosonlineadd[conn] = email
                     usuariosonlineamsg[email] = conn
-                    mensagensoffline(identificador2)
+                    mensagensoffline()
                 else :
                     conn.sendall('emuso')
         bancodedados.close()
@@ -127,7 +132,8 @@ def fazerlogin(conn, data):
         print ('erro')
 
 
-def mensagemamigo(conn, data, identificador2):
+def mensagemamigo(conn, data):
+    global identificador1, identificador2
     try:
         bancodedados = open("agenda.txt", "r")
         i = 0
@@ -166,7 +172,8 @@ def mensagemamigo(conn, data, identificador2):
     except Exception :
         print ('erro')
 
-def mensagemgrupo(conn, data , identificador1):
+def mensagemgrupo(conn, data):
+    global identificador1, identificador2
     try:
         bancodedados = open("grupos.txt", "r")
         i = 1
@@ -216,7 +223,8 @@ def mensagemgrupo(conn, data , identificador1):
         print ('erro')
 
 
-def criargrupo(conn, data, identificador2):
+def criargrupo(conn, data):
+    global identificador1, identificador2
     try:
         i = 0
         bancodedados = open('grupos.txt', 'r')
@@ -247,7 +255,8 @@ def criargrupo(conn, data, identificador2):
     except Exception :
         print('erro')
 
-def excluirgrupo(conn, data, identificador2):
+def excluirgrupo(conn, data):
+    global identificador1, identificador2
     try:
         i = 0
         bancodedados = open('grupos.txt', 'r')
@@ -274,7 +283,8 @@ def excluirgrupo(conn, data, identificador2):
         print('erro')
 
 
-def addaogrupo(conn, data, identificador2):
+def addaogrupo(conn, data):
+    global identificador1, identificador2
     try:
         i = 0
         t = 0
@@ -348,10 +358,47 @@ def addaogrupo(conn, data, identificador2):
     except Exception :
         print ('erro')
 
-def sair(conn, identificador2):
+def sair(conn):
+    global identificador1, identificador2, i
+    i = i - 1
     usuariosonlineadd.pop(conn)
     usuariosonlineamsg.pop(identificador2)
     conn.sendall('ok')
+
+def excluirconta(conn, data) :
+    try:
+        i = 0
+        bancodedados = open("usuarios.txt", 'r')
+        for linha in bancodedados:
+            linha = linha.strip("\n")
+            nome, senha, email = linha.split(";")
+            if (nome == data[2]) and (senha != data[3]):
+                i = i + 1
+            if (nome == data[2]) and (senha == data[3]):
+                try:
+                    usuarios = open('usuarios.txt', 'r')
+                    usuarios2 = open('usuarios2.txt', 'w')
+                    for linha2 in usuarios:
+                        linha2 = linha2.strip('\n')
+                        nome, senha, email = linha2.split(';')
+                        if email == data[2] and senha == data[3] :
+                            pass
+                        else:
+                            usuarios2.write(linha)
+                            usuarios2.write('\n')
+                            usuarios2.close()
+                            usuarios.close()
+                        os.remove('usuarios.txt')
+                        os.rename('usuarios2.txt', 'usuarios.txt')
+                        conn.sendall('ok')
+                except Exception:
+                    print ('erro')
+
+        bancodedados.close()
+        if i == 0:
+            conn.sendall('senhaerrada')
+    except Exception:
+        print ('erro')
 
 def numeroparametros(msg):
 
@@ -362,38 +409,48 @@ def numeroparametros(msg):
     return i
 
 def aceitar(conn):
-    while True:
-        dadoscliente = conn.recv(1024)
-        numeros = numeroparametros(dadoscliente)
-        dados = []
-        dados[:] = dadoscliente.split(';')
-        if int(numeros == 1):
-            if dados[0] == "sair":
-                sair(conn, identificador2)
-        if int(numeros == 2):
-            if data[0] == "adicionarcontato":
-                adicionarcontato(conn, dados, identificador2)
-            else:
-                excluirgrupo(conn, dados, identificador2)
-        if int(numeros) > 3:
-            if data[0] == 'criargrupo':
-                criargrupo(conn, dados, identificador2)
-            else:
-                fazercadastro(conn, dados)
-        if int(numeros == 3):
-            if dados[0] == "fazerlogin":
-                fazerlogin(conn, dados)
-            if dados[0] == "mensagemgrupo":
-                mensagemgrupo(conn, dados, identificador1)
-            if dados[0] == "mensagemamigo":
-                mensagemamigo(conn, dados, identificador2)
-            if data[0] == 'addaogrupo':
-                addaogrupo(conn, dados, identificador2)
-        if not data: break
-    conn.close()
+    global  i
+    i = i +1
+    if i > 10 :
+        conn.sendall('Número máximo de usuários online atingido, tente novamente mais tarde.\n')
+        conn.close()
+        i = i - 1
+    else:
+        while True:
+            dadoscliente = conn.recv(1024)
+            numeros = numeroparametros(dadoscliente)
+            dados = []
+            dados[:] = dadoscliente.split(';')
+            if int(numeros == 1):
+                if dados[0] == "sair":
+                    sair(conn)
+            if int(numeros == 2):
+                if data[0] == "adicionarcontato":
+                    adicionarcontato(conn, dados)
+                else:
+                    excluirgrupo(conn, dados)
+            if int(numeros) > 3:
+                if data[0] == 'criargrupo':
+                    criargrupo(conn, dados)
+                else:
+                    fazercadastro(conn, dados)
+            if int(numeros == 3):
+                if dados[0] == "fazerlogin":
+                    fazerlogin(conn, dados)
+                if dados[0] == "mensagemgrupo":
+                    mensagemgrupo(conn, dados)
+                if dados[0] == "mensagemamigo":
+                    mensagemamigo(conn, dados)
+                if data[0] == 'addaogrupo':
+                    addaogrupo(conn, dados)
+                if data[0] == 'excluirconta' :
+                    excluirconta(conn, dados)
+            if not data: break
+        conn.close()
 
 if __name__ == '__main__':
-    global str(identificador1) , str(identificador2)
+    global identificador1 , identificador2, i
+    i = 1
     HOST = ''
     PORT = 50999
     s=socket.socket(socket.AF_INET, socket.SOCK_STREAM)
