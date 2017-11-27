@@ -71,6 +71,7 @@ def fazercadastro(conn, data):
             bancodedados.write(str(dadoscliente))
             bancodedados.write("\n")
             bancodedados.close()
+            print ('cadastro feito')
             conn.sendall('ok')
     except Exception :
         conn.sendall('erro')
@@ -118,6 +119,7 @@ def fazerlogin(conn, data):
             if (nome == data[1]) and (senha == data[2]):
                 usuariosonlinemsg.has_key(data[3])
                 if False :
+                    print('ok')
                     identificador1 = nome
                     identificador2 = email
                     usuariosonlineadd[conn] = email
@@ -423,51 +425,61 @@ def aceitar(conn):
             dados[:] = dadoscliente.split(';')
             if int(numeros == 1):
                 if dados[0] == "sair":
+                    print('saindo da conta')
                     sair(conn)
             if int(numeros == 2):
-                if data[0] == "adicionarcontato":
+                if dados[0] == "adicionarcontato":
+                    print ('adicionando contato')
                     adicionarcontato(conn, dados)
                 else:
+                    print ('excluindo grupo')
                     excluirgrupo(conn, dados)
             if int(numeros) > 3:
-                if data[0] == 'criargrupo':
+                if dados[0] == 'criargrupo':
+                    print ('criando grupo')
                     criargrupo(conn, dados)
                 else:
+                    print ('fazendo cadastro')
                     fazercadastro(conn, dados)
             if int(numeros == 3):
                 if dados[0] == "fazerlogin":
+                    print ('fazendo login')
                     fazerlogin(conn, dados)
                 if dados[0] == "mensagemgrupo":
+                    print ('mensagem grupo')
                     mensagemgrupo(conn, dados)
                 if dados[0] == "mensagemamigo":
+                    print ('mensagem amigo')
                     mensagemamigo(conn, dados)
-                if data[0] == 'addaogrupo':
+                if dados[0] == 'addaogrupo':
+                    print ('add ao grupo')
                     addaogrupo(conn, dados)
-                if data[0] == 'excluirconta' :
+                if dados[0] == 'excluirconta' :
+                    print ('excluir conta')
                     excluirconta(conn, dados)
-            if not data: break
+            if not dadoscliente: break
         conn.close()
 
 if __name__ == '__main__':
     global identificador1 , identificador2, i
     i = 1
     HOST = ''
-    PORT = 50999
+    PORT = 50998
     s=socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     s.bind((HOST, PORT))
-    f.open("usuarios.txt", 'w')
-    f.close()
-    f.open("mensagensoffline.txt", 'w')
-    f.close()
-    f.open("agenda.txt", 'w')
-    f.close()
-    f.open("grupos.txt", 'w')
-    f.close()
+    a = open("usuarios.txt", 'w')
+    a.close()
+    a = open("mensagensoffline.txt", 'w')
+    a.close()
+    a = open("agenda.txt", 'w')
+    a.close()
+    a = open("grupos.txt", 'w')
+    a.close()
     usuariosonlineadd = {}
     usuariosonlineamsg = {}
 
     while True:
         s.listen(1)
         conn, addr = s.accept()
-        t = Thread(target=aceitar, args=conn)
+        t = Thread(target=aceitar, args=(conn,))
         t.start()

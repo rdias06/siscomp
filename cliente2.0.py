@@ -8,7 +8,7 @@ from multiprocessing import Process
 from threading import Thread
 
 
-class Usuario:
+class usuario:
     def __init__(self, nome="", senha="", email=""):
         self.nome = nome
         self.senha = senha
@@ -49,7 +49,7 @@ class Usuario:
                     u.fazerlogin()
             except Exception :
                 print ('opcao inválida, você voltou para o menu principal.\n')
-                u.menu1()
+                menu1()
 
     def fazerlogin(self):
         u.nome = raw_input("Digite seu nome.\n")
@@ -59,13 +59,13 @@ class Usuario:
         dados.append(u.nome)
         dados.append(u.senha)
         sep = ';'
-        dados2 = sep.join(dados[1:3])
+        dados2 = sep.join(dados)
         s.sendall(str(dados2))
         confirmacao = s.recv(1024)
         if confirmacao == 'emuso':
             print('Conta já está online em outro computador.\n')
             print ("Você voltou para o menu principal.\n")
-            u.menu1()
+            menu1()
         if confirmacao == 'naoexiste' :
             try:
                 print ("Nome ou senha errados.\n")
@@ -78,14 +78,14 @@ class Usuario:
                 if int(decisao) == 1:
                     u.fazerlogin()
                 if int(decisao) == 2:
-                    u.menu1()
+                    menu1()
             except Exception:
                 print ("opcao invalida, voce voltou para o menu principal.\n")
-                u.menu1()
+                menu1()
         if confirmacao == 'semmsg' :
             print('Você está logado.\n')
             print('Você não recebeu mensagens enquanto esteve offline.\n')
-            u.menu2()
+            menu2()
         else :
             mensagem = []
             mensagem[:] = confirmacao.split(';')
@@ -111,7 +111,7 @@ class Usuario:
         confirmacao = s.recv(1024)
         if confirmacao == 'ok':
             print ('Grupo criado com sucesso')
-            u.menu2()
+            menu2()
         if confirmacao == 'erro':
             print('Já existe um grupo com esse nome, tente novamente')
             u.criargrupo()
@@ -131,7 +131,7 @@ class Usuario:
             if int(decisao) == 1:
                 u.addaogrupo()
             if int(decisao) == 2:
-                u.menu2()
+                menu2()
         except Exception:
             print ("opcao invalida, tente novamente.\n")
             u.menuexcluirgrupo()
@@ -147,7 +147,7 @@ class Usuario:
             if int(decisao) == 1:
                 u.addaogrupo()
             if int(decisao) == 2:
-                u.menu2()
+                menu2()
          except Exception :
             print ("opcao invalida, tente novamente.\n")
             u.menuaddaogrupo()
@@ -185,7 +185,7 @@ class Usuario:
             if int(decisao) == 1:
                 u.excluirgrupo()
             if int(decisao) == 2:
-                u.menu2()
+                menu2()
         except Exception:
             print ("opcao invalida, tente novamente.\n")
             u.menuexcluirgrupo()
@@ -228,7 +228,7 @@ class Usuario:
                 if decisao == 1:
                     u.adicionarcontato()
             except Exception:
-                u.menu2()
+                menu2()
         if confirmacao == 'naocadastrada':
             try:
                 print ("Nao existe essa pessoa cadastrada no programa.\n")
@@ -240,7 +240,7 @@ class Usuario:
                 if int(decisao2) == 1:
                     u.adicionarcontato()
             except Exception:
-                u.menu2()
+                menu2()
         if confirmacao == 'jaadcionada':
             try:
                 print ('Essa pessoa já está na sua agenda.\n')
@@ -252,7 +252,7 @@ class Usuario:
                 if int(decisao2) == 1:
                     u.adicionarcontato()
             except Exception:
-                u.menu2()
+                menu2()
 
 
     def mensagemamigo(self):
@@ -282,13 +282,13 @@ class Usuario:
                     u.adicionarcontato()
             except Exception:
                 print ('opcao inválita, você voltou ao menu principal.\n')
-                u.menu2()
+                menu2()
         if confirmacao == 'ok':
             print ('Mensagem enviada.\n')
-            u.menu2()
+            menu2()
         if confirmacao == 'amigooffline':
             print ('Amigo offline, quando ele entrar ele reseberá sua mensagem.\n')
-            u.menu2()
+            menu2()
 
 
     def mensagemgrupo(self):
@@ -317,10 +317,10 @@ class Usuario:
                 if int(decisao2) == 2:
                     u.criargrupo()
             except Exception:
-                u.menu2()
+                menu2()
         if confirmacao == 'ok' :
             print ('Todos os membros do grupo que estão online receberam e quem está offline irá ver quando entrar na conta.\n')
-            u.menu2()
+            menu2()
 
     def excluirconta(self):
         try:
@@ -344,13 +344,13 @@ class Usuario:
                 confirmacao = s.recv(1024)
                 if confirmacao == 'ok' :
                     print ('Você excluiu sua conta.\n')
-                    u.menu1()
+                    menu1()
             if int(decisao2) == 'senhaerrada':
                 print ('Senha errada, você voltou ao menu principal.\n')
-                u.menu2()
+                menu2()
         except Exception:
             print ('Opção inválida, você voltou ao menu principal.\n')
-            u.menu2()
+            menu2()
 
     def sair(self):
         try:
@@ -366,16 +366,16 @@ class Usuario:
                 confirmacao = s.recv(1024)
                 if confirmacao == 'ok':
                     print ('Você saiu da sua conta.\n')
-                    u.menu1()
+                    menu1()
             if int(decisao2) == 'não':
-                u.menu2()
+                menu2()
         except Exception:
-            u.menu2()
+            menu2()
 def fecharsocket(self):                                        ############isso ta errado???
     s.close()
 
 
-def menu1(self):
+def menu1():
     try:
         print ("Digite:\n")
         print ("1 para fazer login.\n")
@@ -392,9 +392,9 @@ def menu1(self):
             fecharsocket()
     except Exception:
         print ("opcao invalida, tente novamente.\n")
-        u.menu1()
+        menu1()
 
-def menu2(self):
+def menu2():
     try:
         print ("Digite:\n")
         print ("1 para adicionar um contato.\n")
@@ -425,20 +425,20 @@ def menu2(self):
         if int(decisao) == 7:
             u.excluirgrupo()
         if int(decisao) == 8:
-
+            pass
         if int(decisao) == 9:
-
+            pass
         if int(decisao) == 10:
             u.excluirconta()
     except Exception:
         print ("opcao invalida, tente novamente")
-        u.menu2()
+        menu2()
 
 if __name__ == '__main__':
     HOST = '127.0.0.1'  # The remote host
-    PORT = 50999
+    PORT = 50998
     s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     s.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
-    s.connect((HOST, PORT))  #
-    u.usuario()
+    s.connect((HOST, PORT))
+    u=usuario()
     menu1()
