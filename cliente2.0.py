@@ -11,42 +11,47 @@ from time import  sleep
 
 def thread2():
     class mensagem:
-        def __init__(self, nome="", senha=""):
+        def __init__(self, nome="", senha="", login=""):
             self.nome = nome
             self.senha = senha
+            self.login = login
 
         def recebermensagem(self):
-            global nome, senha
-            l = []
-            l.append('recebe')
-            l.append(nome)
-            l.append(senha)
-            sep = ';'
-            info = sep.join(l)
-            s.sendall(str(info))
-            confirmacao = s.recv(1024)
-            if confirmacao == 'ok':
-                while True:
-                    try:
-                        dados = s.recv(1024)
-                        mensagem = []
-                        mensagem[:] = dados.split(';')
-                        if len(mensagem) == 5:
-                            if mensagem[1] == 'mensagemamigo':
-                                print (mensagem[2])
-                                print('disse:')
-                                print(mensagem[3])
-                            if mensagem[1] == 'mensagemgrupo':
-                                print('No grupo')
-                                print(mensagem[2])
-                                print(':')
-                                print(mensagem[3])
-                                print('disse:')
-                                print(mensagem[4])
-                        if not dados: break
-                    except Exception:
-                        print('erro')
-    sleep(8)
+            i = 1
+            global nome, senha, login
+            login = 0
+            while i > 0:
+                if login == 1:
+                    l = []
+                    l.append('recebe')
+                    l.append(nome)
+                    l.append(senha)
+                    sep = ';'
+                    info = sep.join(l)
+                    s.sendall(str(info))
+                    confirmacao = s.recv(1024)
+                    if confirmacao == 'ok':
+                        print('conn guardado')
+                        while True:
+                            try:
+                                dados = s.recv(1024)
+                                mensagem = []
+                                mensagem[:] = dados.split(';')
+                                if mensagem[0] == 'mensagemamigo':
+                                    print (mensagem[1])
+                                    print('disse:')
+                                    print(mensagem[2])
+                                if mensagem[0] == 'mensagemgrupo':
+                                    print('No grupo')
+                                    print(mensagem[1])
+                                    print(':')
+                                    print(mensagem[2])
+                                    print('disse:')
+                                    print(mensagem[3])
+                            except Exception:
+                                print('erro')
+                else:
+                    i = i + 1
     HOST = '127.0.0.1'
     PORT = 50994
     s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -89,29 +94,30 @@ def thread1():
                     print ("Agora voce ja pode falar com seus amigos.\n")
                     print ('Primeiro faça seu login.\n')
                     u.fazerlogin()
-            except Exception:
-                try:
-                    print ("E-mail ja está em uso.\n")
-                    print ("Digite:\n")
-                    print ("1 para tentar se cadastrar novamente.\n")
-                    print ("2 para entrar na sua conta.\n")
-                    decisao = raw_input("\n")
-                    if (int(decisao) != 1) and (int(decisao) != 2):
-                        raise
-                    if int(decisao) == 1:
-                        u.fazercadastro()
-                    if int(decisao) == 2:
-                        u.fazerlogin()
-                except Exception:
-                    print ('opcao inválida, você voltou para o menu principal.\n')
-                    u.menu1()
-
+                if confirmacao == 'emuso':
+                    try:
+                        print ("E-mail ja está em uso.\n")
+                        print ("Digite:\n")
+                        print ("1 para tentar se cadastrar novamente.\n")
+                        print ("2 para entrar na sua conta.\n")
+                        decisao = raw_input("\n")
+                        if (int(decisao) != 1) and (int(decisao) != 2):
+                            raise
+                        if int(decisao) == 1:
+                            u.fazercadastro()
+                        if int(decisao) == 2:
+                            u.fazerlogin()
+                    except Exception:
+                        print ('opcao inválida, você voltou para o menu principal.\n')
+                        u.menu1()
+            except Exception :
+                print('erro')
         def fazerlogin(self):
-            global nome, senha
+            global nome, senha, login
             u.nome = raw_input("Digite seu nome.\n")
             u.senha = raw_input("Digite sua senha.\n")
             nome = u.nome
-            senha = u.senha
+            senha = u.senh
             dados = []
             dados.append('fazerlogin')
             dados.append(u.nome)
@@ -141,16 +147,18 @@ def thread1():
                     print ("opcao invalida, voce voltou para o menu principal.\n")
                     u.menu1()
             if confirmacao == 'semmsg':
+                login = 1
                 print('Você está logado.\n')
                 print('Você não recebeu mensagens enquanto esteve offline.\n')
                 u.menu2()
             else:
+                login = 1
                 mensagem = []
                 mensagem[:] = confirmacao.split(';')
                 print ('Enquanto você esteve offline,\n')
-                print(mensagem[1])
+                print(mensagem[0])
                 print('disse:')
-                print (mensagem[2])
+                print (mensagem[1])
                 print ('\n')
                 u.menu2()
 
@@ -449,6 +457,7 @@ def thread1():
                 u.excluirconta()
 
         def sair(self):
+            global login
             try:
                 print ('Tem certeza que deseja sair da sua conta?\n')
                 print ("Digite sim sair.\n")
@@ -461,6 +470,7 @@ def thread1():
                     s.sendall(str(identificador))
                     confirmacao = s.recv(1024)
                     if confirmacao == 'ok':
+                        login = 0
                         print ('Você saiu da sua conta.\n')
                         u.menu1()
                 if str(decisao2) == 'não':
@@ -539,7 +549,7 @@ def thread1():
 
 
 if __name__ == '__main__':
-    global nome, senha
+    global nome, senha, login
     t1 = Thread(target=thread1, args=())
     t1.start()
     t2 = Thread(target=thread2, args=())
