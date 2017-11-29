@@ -53,7 +53,7 @@ def thread2():
                 else:
                     i = i + 1
     HOST = '127.0.0.1'
-    PORT = 50994
+    PORT = 50999
     s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     s.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
     s.connect((HOST, PORT))
@@ -117,7 +117,7 @@ def thread1():
             u.nome = raw_input("Digite seu nome.\n")
             u.senha = raw_input("Digite sua senha.\n")
             nome = u.nome
-            senha = u.senh
+            senha = u.senha
             dados = []
             dados.append('fazerlogin')
             dados.append(u.nome)
@@ -146,20 +146,9 @@ def thread1():
                 except Exception:
                     print ("opcao invalida, voce voltou para o menu principal.\n")
                     u.menu1()
-            if confirmacao == 'semmsg':
+            if confirmacao == 'ok':
                 login = 1
                 print('Você está logado.\n')
-                print('Você não recebeu mensagens enquanto esteve offline.\n')
-                u.menu2()
-            else:
-                login = 1
-                mensagem = []
-                mensagem[:] = confirmacao.split(';')
-                print ('Enquanto você esteve offline,\n')
-                print(mensagem[0])
-                print('disse:')
-                print (mensagem[1])
-                print ('\n')
                 u.menu2()
 
         def criargrupo(self):
@@ -276,6 +265,10 @@ def thread1():
                     u.menuaddaogrupo2()
                 if confirmacao == 'naocadastrado':
                     u.menuaddaogrupo3()
+                if confirmacao == 'naoestanogrupo':
+                    print('Você não está no grupo.\n')
+                    print('Você voltou ao menu principal.\n')
+                    u.menu2()
             except Exception:
                 print ('erro')
 
@@ -330,7 +323,7 @@ def thread1():
                     decisao = raw_input("\n")
                     if int(decisao) != 1:
                         raise
-                    if decisao == 1:
+                    if int(decisao) == 1:
                         u.adicionarcontato()
                 except Exception:
                     u.menu2()
@@ -346,7 +339,7 @@ def thread1():
                         u.adicionarcontato()
                 except Exception:
                     u.menu2()
-            if confirmacao == 'jaadcionada':
+            if confirmacao == 'jaadicionada':
                 try:
                     print ('Essa pessoa já está na sua agenda.\n')
                     print ("Digite 1 para adicionar outra pessoa.\n")
@@ -502,7 +495,7 @@ def thread1():
             try:
                 print ("Digite:\n")
                 print ("1 para adicionar um contato.\n")  # ok
-                print ("2 para conversar com um amigo.\n")
+                print ("2 para conversar com um amigo.\n")   #ok
                 print ("3 para criar um grupo.\n")  # ok
                 print ("4 para conversar com um grupo.\n")
                 print ('5 para adicionar um contato à um grupo.\n')  # ok
@@ -540,7 +533,7 @@ def thread1():
                 print ("opcao invalida, tente novamente")
                 u.menu2()
     HOST = '127.0.0.1'
-    PORT = 50994
+    PORT = 50999
     s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     s.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
     s.connect((HOST, PORT))
