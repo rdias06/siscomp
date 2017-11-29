@@ -5,17 +5,18 @@
 import socket
 from multiprocessing import Process
 from threading import Thread
+import os
+import sys
 
 
 
-def adicionarcontato(conn, data) :
-    global identificador1, identificador2
+def adicionarcontato(conn, data, identificador2) :
     a = 0
     bancodedados2 = open('usuarios.txt', 'r')
     for linha in bancodedados2:
         linha = linha.strip('\n')
-        emailusuario = linha.split(';')
-        if emailusuario == data[2]:
+        nome, senha, email, connenviar = linha.split(';')
+        if email == data[1]:
             a = a + 1
     bancodedados2.close()
     if a == 0:
@@ -26,7 +27,7 @@ def adicionarcontato(conn, data) :
             bancodedados = open('agenda.txt', 'r')
             for linha in bancodedados:
                 linha = linha.strip('\n')
-                emailusuario, emaiamigo = linha.split(';')
+                emailusuario, emailamigo = linha.split(';')
                 if identificador2 != emailusuario:
                     pass
                 if data[1] == emailamigo and identificador2 == emailusuario:
@@ -36,11 +37,11 @@ def adicionarcontato(conn, data) :
             bancodedados.close()
             if i == 0:
                 add = open('agenda.txt', 'a')
-                contato = []
-                contato.append(identificador2)
-                contato.append(data[2])
+                l = []
+                l.append(str(identificador2))
+                l.append(data[1])
                 sep = ';'
-                dados = sep.join(contato)
+                dados = sep.join(l)
                 add.write(dados)
                 add.write('\n')
                 add.close()
@@ -49,133 +50,106 @@ def adicionarcontato(conn, data) :
             print 'erro'
 
 def fazercadastro(conn, data):
-    global identificador1, identificador2
     try:
         i = 0
         bancodedados = open("usuarios.txt","r")
         for linha in bancodedados:
             linha = linha.strip("\n")
-            nome, senha, email = linha.split(";")
+            nome, senha, email, connenviar = linha.split(";")
             if email == data[2]:
                 i = i+1
                 raise
         bancodedados.close()
         if i == 0:
-            bancodedados = open('usuarios.txt', 'a')
+            bancodedados2 = open('usuarios.txt', 'a')
             dados = []
             dados.append(data[1])
             dados.append(data[2])
             dados.append(data[3])
+            dados.append('a')
             sep = ';'
-            dadoscliente = sep.join(dados[1:3])
-            bancodedados.write(str(dadoscliente))
-            bancodedados.write("\n")
-            bancodedados.close()
+            dadoscliente = sep.join(dados)
+            bancodedados2.write(str(dadoscliente))
+            bancodedados2.write("\n")
+            bancodedados2.close()
             print ('cadastro feito')
             conn.sendall('ok')
     except Exception :
         conn.sendall('erro')
 
-def mensagensoffline():
-    global identificador1, identificador2
+def mensagensoffline(identificador2):
     i = 0
-    msg = open('mensagensoffline.txt', 'r')
-    msg2 = open('mensagensoffline2.txt', 'w')
-    for linha in msg:
-        linha = linha.strip('\n')
-        email, contato,  mensagem = linha.split(';')
-        if email != identificador2:
-            pass
-        else:
-            i = i + 1
-            l = []
-            l.append(contato)
-            l.append(mensagem)
-            sep = ';'
-            envio = sep.join(l)
-            conn.sendall(str(envio))
-            msg2.write(linha)
-            msg2.write('\n')
-            msg2.close()
-            msg.close()
+    try:
+        msg = open('mensagensoffline.txt', 'r')
+        for linha in msg:
+            linha = linha.strip('\n')
+            emailusuario, identificador, emailcontato,  mensagem, a = linha.split(';')
+            if emailusuario == identificador2:
+                i = i + 1
+                l = []
+                l.append(identificador)
+                l.append(emailcontato)
+                l.append(mensagem)
+                l.append(a)
+                sep = ';'
+                envio = sep.join(l)
+                conn.sendall(str(envio))
+            if emailusuario != identificador2:
+                msg2 = open('mensagensoffline2.txt', 'a')
+                msg2.write(linha)
+                msg2.write('\n')
+                msg2.close()
+        msg.close()
+        if i != 0 :
             os.remove('mensagensoffline.txt')
             os.rename('mensagensoffline2.txt', 'mensagensoffline.txt')
         if i == 0 :
+            print('sem mensagem')
             conn.sendall('semmsg')
-
-
-def fazerlogin(conn, data):
-    global identificador1, identificador2
-    try:
-        i = 0
-        bancodedados = open("usuarios.txt", 'r')
-        for linha in bancodedados:
-            linha = linha.strip("\n")
-            nome, senha, email = linha.split(";")
-            if (nome != data[1]) and (senha != data[2]):
-                pass
-            if (nome == data[1]) or (senha == data[2]):
-                i = i + 1
-            if (nome == data[1]) and (senha == data[2]):
-                usuariosonlinemsg.has_key(data[3])
-                if False :
-                    print('ok')
-                    identificador1 = nome
-                    identificador2 = email
-                    usuariosonlineadd[conn] = email
-                    usuariosonlineamsg[email] = conn
-                    mensagensoffline()
-                else :
-                    conn.sendall('emuso')
-        bancodedados.close()
-        if i == 0 :
-            conn.sendall('naoexiste')
-    except Exception :
+    except Exception:
         print ('erro')
 
-
-def mensagemamigo(conn, data):
-    global identificador1, identificador2
+def mensagemamigo(conn, data, identificador1, identificador2, usuariosonlineamsg):
     try:
         bancodedados = open("agenda.txt", "r")
         i = 0
         for linha in bancodedados:
             linha = linha.strip("\n")
             emailusuario, emailamigo = linha.split(";")
-            if emailusuario != identificador2 :
-                pass
-            else:
-                if emailamigo != data[2]:
-                    i = i +1
-        bancodedados.close()
+            if emailusuario == identificador2 and emailamigo == data[1]:
+                i = i + 1
         if i == 0 :
             conn.sendall('naoagenda')
         if i != 0 :
-            c = usuariosonlineamsg.get(data[2])
-            if c != 0 :
-                msg = []
-                msg.append(usuariosonlineadd.get(conn))
-                msg.append(data[3])
-                sep = ';'
-                mensagem = sep.join(msg)
-                c.sendall(strg(mensagem))
-                conn.sendall('ok')
-            else :
-                l = []
-                l.append(data[2])
-                l.append('mensagemamigo')
-                l.append(identificador1)
-                l.append(data[3])
-                sep = ';'
-                offline = sep.join(l)
-                bancodedados2 = open('mensagensoffline.txt', 'a')
-                bancodedados2.write(str(offline))
-                conn.sendall('amigooffline')
+            c = usuariosonlineamsg.get(data[1])
+        bancodedados.close()
+        if c != 0 :
+            print(c)
+            msg = []
+            msg.append('mensagemamigo')
+            msg.append(identificador2)
+            msg.append(data[2])
+            sep = ';'
+            mensagem = sep.join(msg)
+            c.sendall(str(mensagem))
+            conn.sendall('ok')
+        else :
+            print(c)
+            l = []
+            l.append(data[1])
+            l.append('mensagemamigo')
+            l.append(identificador1)
+            l.append(data[2])
+            l.append('a')
+            sep = ';'
+            offline = sep.join(l)
+            bancodedados2 = open('mensagensoffline.txt', 'a')
+            bancodedados2.write(str(offline))
+            conn.sendall('amigooffline')
     except Exception :
         print ('erro')
 
-def mensagemgrupo(conn, data):
-    global identificador1, identificador2
+def mensagemgrupo(conn, data, identificador2, usuariosonlineadd, usuariosonlineamsg):
     try:
         bancodedados = open("grupos.txt", "r")
         i = 1
@@ -184,49 +158,45 @@ def mensagemgrupo(conn, data):
             linha = linha.strip("\n")
             grupo = []
             grupo[:] = linha.split(";")
-            if grupo[0] != data[2]:
-                pass
-            if grupo[0] == data[2]:
+            if grupo[0] == data[1]:
                 while c < len(grupo) :
-                    if usuariosonlineadd.get(conn) == grupo[c] :
+                    if usuariosonlineadd[conn] == grupo[c] :
                         while i < len(grupo) :
-                            msg = usuariosonlineamsg.get(grupo[i])
+                            msg = usuariosonlineamsg[grupo[i]]
                             if msg != 0 :
                                 identificadorgrupo = grupo[0]
-                                identificador = usuariosonlineadd.get(conn)
                                 l = []
                                 l.append('mensagemgrupo')
                                 l.append(identificadorgrupo)
+                                identificador = identificador2
                                 l.append(identificador)
-                                l.append(data[3])
+                                l.append(data[2])
                                 sep = ';'
                                 mensagem = sep.join(l)
-                                msg.sendall(strg(mensagem))
-                            else:
-                                identificadorgrupo = grupo[0]
-                                identificador = usuariosonlineadd.get(conn)
+                                msg.sendall(str(mensagem))
+                                conn.sendall('ok')
+                            if msg == 0:
+                                identificador = identificador2
                                 l = []
                                 l.append(grupo[i])
                                 l.append('mensagemgrupo')
-                                l.append(identificadorgrupo)
+                                l.append(grupo[0])
                                 l.append(identificador)
-                                l.append(data[3])
+                                l.append(data[2])
                                 sep = ';'
                                 mensagem = sep.join(l)
                                 bancodedados2 = open('mensagensoffline.txt', 'a')
                                 bancodedados2.write(str(mensagem))
+                                conn.sendal('ok')
                     else :
                         c = c + 1
                 if c == len(grupo) -1 :
                     conn.sendall('naoestanogrupo')
-                else :
-                    conn.sendall('ok')
     except Exception :
         print ('erro')
 
 
-def criargrupo(conn, data):
-    global identificador1, identificador2
+def criargrupo(conn, data, identificador2):
     try:
         i = 0
         bancodedados = open('grupos.txt', 'r')
@@ -236,248 +206,344 @@ def criargrupo(conn, data):
             grupo[:] = linha.split(';')
             if grupo[0] == data[1]:
                 i = i +1
-                conn.send('erro')
+                conn.send('grupojaexiste')
                 bancodedados.close()
                 break
         if i == 0 :
+            a = 0
             add = open('grupos.txt', 'a')
             lista = []
             lista.append(data[1])
             lista.append(identificador2)
             cont = 2
             while cont < len(data):
-                lista.append(data[cont])
+                bancodedados2 = open('agenda.txt', 'r')
+                for linha in bancodedados2:
+                    linha = linha.strip('\n')
+                    emailusuario, emailamigo = linha.split(';')
+                    if emailusuario == identificador2 and emailamigo == data[cont]:
+                        lista.append(data[cont])
+                        a = a + 1
+                bancodedados2.close()
                 cont = cont + 1
-            sep = ';'
-            dados = sep.join(lista[0:len(lista)])
-            add.write(str(dados))
-            add.write('\n')
-            add.close()
-            conn.sendall('ok')
-    except Exception :
-        print('erro')
-
-def excluirgrupo(conn, data):
-    global identificador1, identificador2
-    try:
-        i = 0
-        bancodedados = open('grupos.txt', 'r')
-        bancodedados2 = open('grupos2.txt', 'w')
-        for linha in bancodedados:
-            linha = linha.strip('\n')
-            grupo = []
-            grupo[:] = linha.split(';')
-            if grupo[0] == data[2] :
-                if grupo[1] != identificador2 :
-                    conn.sendall('naocriou')
-                    i = i +1
-                    bancodedados2.close()
-                    bancodedados.close()
-                if i == 0:
-                    bancodedados2.write(linha)
-                    bancodedados2.write('\n')
-                    bancodedados2.close()
-                    bancodedados.close()
-                os.remove('bancodedados.txt')
-                os.rename('bancodedados2.txt', 'bancodedados.txt')
+            if a != len(data) - 2 :
+                conn.sendall('erro')
+            if a == len(data) - 2 :
+                sep = ';'
+                dados = sep.join(lista)
+                add.write(str(dados))
+                add.write('\n')
+                add.close()
                 conn.sendall('ok')
     except Exception :
         print('erro')
 
+def excluirgrupo(conn, data, identificador2):
+    try:
+        bancodedados = open('grupos.txt', 'r')
+        bancodedados2 = open('grupos2.txt', 'w')
+        bancodedados2.close()
+        for linha in bancodedados:
+            linha = linha.strip('\n')
+            grupo = []
+            grupo[:] = linha.split(';')
+            if grupo[0] == data[1] and grupo[1] != identificador2 :
+                conn.sendall('naocriou')
+                bancodedados.close()
+            if grupo[0] != data[1] :
+                bancodedados3 = open('grupos2.txt', 'a')
+                bancodedados3.write(linha)
+                bancodedados3.write('\n')
+                bancodedados3.close()
+        bancodedados.close()
+        os.remove('grupos.txt')
+        os.rename('grupos2.txt', 'grupos.txt')
+        conn.sendall('ok')
+    except Exception :
+        print('erro')
 
-def addaogrupo(conn, data):
-    global identificador1, identificador2
+
+def addaogrupo(conn, data, identificador2):
     try:
         i = 0
         t = 0
         bancodedados = open("usuarios.txt", 'r')
         for linha in bancodedados:
             linha = linha.strip("\n")
-            nome, senha, email = linha.split(";")
+            nome, senha, email, connenviar = linha.split(";")
             if (email != data[2]):
                 pass
             if (email == data[2]):
                 i = i +1
-                break
         bancodedados.close()
         bancodedados4 = open("agenda.txt", 'r')
         for linha in bancodedados4:
             linha = linha.strip("\n")
-            emailusurario, emailamigo = linha.split(";")
+            emailusurario, emailamigo, connenviar = linha.split(";")
             if emailusurario != identificador2:
                 pass
             if emailusurario == identificador2 and emailamigo == data[2]:
                 t = t + 1
-                break
         bancodedados4.close()
-        if t == 0:
-            conn.sendall('naoagenda')
+        try:
+            if i == 0:
+                raise
+            if t == 0:
+                print('nao agenda')
+                conn.sendall('naoagenda')
+        except Exception :
+            print('nao cadastrado')
+            conn.sendall('naocadastrado')
         if i !=0 and t != 0:
-            c = 0
-            h = 0
-            bancodedados2 = open('grupos.txt', 'r')
-            for linha in bancodedados2:
-                linha = linha.strip('\n')
-                grupo = []
-                grupo[:] = linha.split(';')
-                if grupo[0] == data[1]:
-                    while h < len(grupo):
-                        if grupo[h] == identificador2:
-                            h = h +1
-                        else:
-                            pass
-                    if h != 0:
-                        while c < len(grupo):
-                            if grupo[c] == data[2]:
-                                conn.sendall('jaesta')
-                                break
-                            else:
+            try:
+                c = 1
+                h = 0
+                y = 0
+                p = 0
+                r = 0
+                bancodedados2 = open('grupos.txt', 'r')
+                for linha in bancodedados2:
+                    linha = linha.strip('\n')
+                    grupo = []
+                    grupo[:] = linha.split(';')
+                    if grupo[0] == data[1]:
+                        while h < len(grupo):
+                            if grupo[h] == identificador2:
+                                y = y + 1
+                            h = h + 1
+                        if y != 0:
+                            while c < len(grupo):
+                                if grupo[c] == data[2]:
+                                    raise
+                                    r = r + 1
                                 c = c +1
-                        bancodedados2.close()
-                if c != 0 :
-                    grupos = open('grupos.txt', 'r')
-                    grupos2 = open('grupos2.txt', 'w')
-                    for linha in grupos:
-                        linha = linha.strip('\n')
-                        grupo2 = []
-                        grupo2[:] = linha.split(';')
-                        if grupo2[0] == data[1]:
-                            g = grupo2
-                            g.append(data[2])
-                            pass
-                        else:
-                            grupos2.write(linha)
-                            grupos2.write('\n')
-                            grupos2.close()
-                            grupos.close()
+                    bancodedados2.close()
+                    if r == 0 :
+                        grupos = open('grupos.txt', 'r')
+                        grupos2 = open('grupos2.txt', 'w')
+                        grupos2.close()
+                        for linha in grupos:
+                            linha = linha.strip('\n')
+                            grupo2 = []
+                            grupo2[:] = linha.split(';')
+                            if grupo2[0] == data[1]:
+                                grupo2.append(data[2])
+                                sep = ';'
+                                g = sep.join(grupo2)
+                                p = p + 1
+                            else:
+                                grupos3 = open('grupos2.txt', 'a')
+                                grupos3.write(linha)
+                                grupos3.write('\n')
+                                grupos3.close()
+                        grupos.close()
                         os.remove('grupos.txt')
                         os.rename('grupos2.txt', 'grupos.txt')
-                    bancodedados3 = open('grupos', 'a')
-                    bancodedados3.write(c)
-                    bancodedados3.write('\n')
-                    bancodedados3.close()
-                    conn.sendall('ok')
+                        if p != 0:
+                            bancodedados3 = open('grupos.txt', 'a')
+                            bancodedados3.write(g)
+                            bancodedados3.write('\n')
+                            bancodedados3.close()
+                            conn.sendall('ok')
+            except Exception :
+                print ('ja esta no grupo')
+                conn.sendall('jaesta')
     except Exception :
         print ('erro')
 
-def sair(conn):
-    global identificador1, identificador2, i
-    i = i - 1
-    usuariosonlineadd.pop(conn)
-    usuariosonlineamsg.pop(identificador2)
-    conn.sendall('ok')
-
-def excluirconta(conn, data) :
+def excluirconta(conn, data, identificador1) :
     try:
         i = 0
         bancodedados = open("usuarios.txt", 'r')
         for linha in bancodedados:
             linha = linha.strip("\n")
-            nome, senha, email = linha.split(";")
-            if (nome == data[2]) and (senha != data[3]):
+            nome, senha, email, connenviar = linha.split(";")
+            if (nome == identificador1) and (senha != data[2]):
                 i = i + 1
-            if (nome == data[2]) and (senha == data[3]):
+            if (nome == identificador1) and (senha == data[2]):
                 try:
                     usuarios = open('usuarios.txt', 'r')
                     usuarios2 = open('usuarios2.txt', 'w')
+                    usuarios2.close()
                     for linha2 in usuarios:
                         linha2 = linha2.strip('\n')
-                        nome, senha, email = linha2.split(';')
-                        if email == data[2] and senha == data[3] :
-                            pass
-                        else:
-                            usuarios2.write(linha)
-                            usuarios2.write('\n')
-                            usuarios2.close()
-                            usuarios.close()
-                        os.remove('usuarios.txt')
-                        os.rename('usuarios2.txt', 'usuarios.txt')
-                        conn.sendall('ok')
+                        nome, senha, email, connenviar = linha2.split(';')
+                        if email != data[1]:
+                            usuarios3 = open('usuarios2.txt', 'a')
+                            usuarios3.write(linha2)
+                            usuarios3.write('\n')
+                            usuarios3.close()
+                    usuarios.close()
+                    agenda = open('agenda.txt', 'r')
+                    agenda2 = open('agenda2.txt', 'w')
+                    agenda2.close()
+                    try:
+                        for linha3 in agenda:
+                            linha3 = linha3.strip('\n')
+                            emailusuario, emailamigo, connenviar = linha3.split(';')
+                            if email != emailusuario or email != emailamigo :
+                                agenda3 = open('agenda2.txt', 'a')
+                                agenda3.write(linha3)
+                                agenda3.write('\n')
+                                agenda3.close()
+                    except Exception :
+                        print('erro')
+                    agenda.close()
+                    os.remove('usuarios.txt')
+                    os.rename('usuarios2.txt', 'usuarios.txt')
+                    os.remove('agenda.txt')
+                    os.rename('agenda2.txt', 'agenda.txt')
+                    conn.sendall('ok')
                 except Exception:
                     print ('erro')
-
         bancodedados.close()
-        if i == 0:
+        if i != 0:
             conn.sendall('senhaerrada')
     except Exception:
         print ('erro')
 
-def numeroparametros(msg):
-
+def numeroparametros(info):
     i = 1
-    for separador in msg:
+    for separador in info:
         if separador == ';' :
                 i = i + 1
     return i
 
 def aceitar(conn):
-    global  i
-    i = i +1
-    if i > 10 :
-        conn.sendall('Número máximo de usuários online atingido, tente novamente mais tarde.\n')
-        conn.close()
-        i = i - 1
-    else:
-        while True:
-            dadoscliente = conn.recv(1024)
-            numeros = numeroparametros(dadoscliente)
-            dados = []
-            dados[:] = dadoscliente.split(';')
-            if int(numeros == 1):
-                if dados[0] == "sair":
-                    print('saindo da conta')
-                    sair(conn)
-            if int(numeros == 2):
-                if dados[0] == "adicionarcontato":
-                    print ('adicionando contato')
-                    adicionarcontato(conn, dados)
-                else:
-                    print ('excluindo grupo')
-                    excluirgrupo(conn, dados)
-            if int(numeros) > 3:
-                if dados[0] == 'criargrupo':
-                    print ('criando grupo')
-                    criargrupo(conn, dados)
-                else:
-                    print ('fazendo cadastro')
-                    fazercadastro(conn, dados)
-            if int(numeros == 3):
-                if dados[0] == "fazerlogin":
-                    print ('fazendo login')
-                    fazerlogin(conn, dados)
-                if dados[0] == "mensagemgrupo":
-                    print ('mensagem grupo')
-                    mensagemgrupo(conn, dados)
-                if dados[0] == "mensagemamigo":
-                    print ('mensagem amigo')
-                    mensagemamigo(conn, dados)
-                if dados[0] == 'addaogrupo':
-                    print ('add ao grupo')
-                    addaogrupo(conn, dados)
-                if dados[0] == 'excluirconta' :
-                    print ('excluir conta')
-                    excluirconta(conn, dados)
-            if not dadoscliente: break
-        conn.close()
+    identificador1 = 0
+    identificador2 = 0
+    global usuariosonlineadd , usuariosonlineamsg
+    while True:
+        dadoscliente = conn.recv(1024)
+        numeros = numeroparametros(dadoscliente)
+        dados = []
+        dados[:] = dadoscliente.split(';')
+        if int(numeros == 1):
+            if dados[0] == "sair":
+                print('saindo da conta')
+                usuariosonlineadd.pop(conn)
+                usuariosonlineamsg.pop(identificador2)
+                conn.sendall('ok')
+        if int(numeros == 2):
+            if dados[0] == "adicionarcontato":
+                print ('adicionando contato')
+                adicionarcontato(conn, dados, identificador2)
+            else:
+                print ('excluindo grupo')
+                excluirgrupo(conn, dados, identificador2)
+        if int(numeros) > 3:
+            if dados[0] == 'criargrupo':
+                print ('criando grupo')
+                criargrupo(conn, dados, identificador2)
+            else:
+                print ('fazendo cadastro')
+                fazercadastro(conn, dados)
+        if int(numeros == 3):
+            if dados[0] == "fazerlogin":
+                print ('fazendo login')
+                try:
+                    i = 0
+                    c = 0
+                    bancodedados = open("usuarios.txt", 'r')
+                    for linha in bancodedados:
+                        linha = linha.strip("\n")
+                        nome, senha, email, connenviar = linha.split(";")
+                        if (nome == dados[1]) and (senha != dados[2]):
+                            i = i + 1
+                        if (nome != dados[1]) and (senha == dados[2]):
+                            i = i + 1
+                        if (nome == dados[1]) and (senha == dados[2]):
+                            if c == 0:
+                                print('ok')
+                                identificador1 = nome
+                                identificador2 = email
+                                usuariosonlineadd[conn] = email
+                                usuariosonlineamsg[email] = conn
+                                print(conn)
+                                mensagensoffline(identificador2)
+                            else:
+                                conn.sendall('emuso')
+                    bancodedados.close()
+                    if i != 0:
+                        print('senha ou nome errado.')
+                        conn.sendall('naoexiste')
+                except Exception:
+                    print ('erro')
+            if dados[0] == "mensagemgrupo":
+                print ('mensagem grupo')
+                mensagemgrupo(conn, dados, identificador2, usuariosonlineadd, usuariosonlineamsg)
+            if dados[0] == "mensagemamigo":
+                print ('mensagem amigo')
+                mensagemamigo(conn, dados, identificador1, identificador2, usuariosonlineamsg)
+            if dados[0] == 'addaogrupo':
+                print ('add ao grupo')
+                addaogrupo(conn, dados, identificador2)
+            if dados[0] == 'excluirconta' :
+                print ('excluir conta')
+                excluirconta(conn, dados, identificador1)
+            if dados[0] == 'recebe':
+                print('guardando conn para usuario receber mensagens')
+                try:
+                    i = 0
+                    c = 0
+                    bancodedados = open("usuarios.txt", 'r')
+                    bancodedados2 = open("usuarios2.txt", 'w')
+                    bancodedados2.close()
+                    for linha in bancodedados:
+                        linha = linha.strip("\n")
+                        nome, senha, email, connenviar = linha.split(";")
+                        if (nome == dados[1]) and (senha == dados[2]):
+                            i = i + 1
+                            lista = []
+                            lista.append(nome)
+                            lista.append(senha)
+                            lista.append(email)
+                            lista.append(str(conn))
+                            print (str(conn))
+                            sep = ';'
+                            info = sep.join(lista)
+                            print(info)
+                        if nome != dados[1]:
+                            usuarios = open('usuarios2.txt', 'a')
+                            usuarios.write(linha)
+                            usuarios.write('\n')
+                            usuarios.close()
+                            usuariosonlineamsg.pop[email]
+                            usuariosonlineamsg[email] = str(conn)
+                            print(usuariosonlineamsg[email])
+                    bancodedados.close()
+                    if i != 0:
+                        c = c + 1
+                        usuarios2 = open('usuarios2.txt', 'a')
+                        usuarios2.write(info)
+                        usuarios2.write('\n')
+                        usuarios2.close()
+                    if c != 0:
+                        os.remove('usuarios.txt')
+                        os.rename('usuarios2.txt', 'usuarios.txt')
+                        print('ok')
+                        conn.sendall('ok')
+                except Exception:
+                    print('erro')
+        if not dadoscliente: break
+    conn.close()
 
 if __name__ == '__main__':
-    global identificador1 , identificador2, i
-    i = 1
+    global usuariosonlineadd, usuariosonlineamsg
+    usuariosonlineamsg = {}
+    usuariosonlineadd = {}
     HOST = ''
-    PORT = 50998
+    PORT = 50994
     s=socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     s.bind((HOST, PORT))
-    a = open("usuarios.txt", 'w')
+    a = open("usuarios.txt", 'a')
     a.close()
-    a = open("mensagensoffline.txt", 'w')
+    a = open("mensagensoffline.txt", 'a')
     a.close()
-    a = open("agenda.txt", 'w')
+    a = open("agenda.txt", 'a')
     a.close()
-    a = open("grupos.txt", 'w')
+    a = open("grupos.txt", 'a')
     a.close()
-    usuariosonlineadd = {}
-    usuariosonlineamsg = {}
-
     while True:
         s.listen(1)
         conn, addr = s.accept()
