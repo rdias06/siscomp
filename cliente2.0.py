@@ -7,7 +7,7 @@ import socket
 from multiprocessing import Process
 from threading import Thread
 from time import  sleep
-
+import os
 
 def thread2():
     class mensagem:
@@ -18,12 +18,12 @@ def thread2():
 
         def recebermensagem(self):
             i = 1
-            global nome, senha, login
+            global nome, senha, login, dictonline
             login = 0
             while i > 0:
                 if login == 1:
                     l = []
-                    l.append('recebe')
+                    l.append('recebemensagem')
                     l.append(nome)
                     l.append(senha)
                     sep = ';'
@@ -31,23 +31,42 @@ def thread2():
                     s.sendall(str(info))
                     confirmacao = s.recv(1024)
                     if confirmacao == 'ok':
-                        print('conn guardado')
+                        print('conn para receber mensagens guardado.\n')
                         while True:
                             try:
                                 dados = s.recv(1024)
                                 mensagem = []
                                 mensagem[:] = dados.split(';')
                                 if mensagem[0] == 'mensagemamigo':
-                                    print (mensagem[1])
-                                    print('disse:')
-                                    print(mensagem[2])
+                                    print (mensagem[1] + ' disse ' + mensagem[2] + '\n')
                                 if mensagem[0] == 'mensagemgrupo':
-                                    print('No grupo')
-                                    print(mensagem[1])
-                                    print(':')
-                                    print(mensagem[2])
-                                    print('disse:')
-                                    print(mensagem[3])
+                                    print('No grupo' + mensagem[1] + ', ' + mensagem[2] + ' disse: ' + mensagem[3])
+                                if mensagem[0] == 'contatoonline':
+                                    dictonline[mensagem[1]] = 'online'
+                                    print(mensagem[1] + ' está online.\n')
+                                    while True:
+                                        bancodedados = open("mensagensoffline.txt", 'r')
+                                        for linha in bancodedados:
+                                            linha = linha.strip("\n")
+                                            nomeusuario, senhausuario, emailamigo, msg = linha.split(";")
+                                            if emailamigo == mensagem[1] and nome == nomeusuario and senha == senhausuario :
+                                                print('seu amigo ' + mensagem[1] + ' está online, sua mesagem foi encaminhada à ele.\n')
+                                                identificador = 'mensagemamigo'
+                                                info = []
+                                                info.append(identificador)
+                                                info.append(emailamigo)
+                                                info.append(msg)
+                                                sep = ';'
+                                                envio = sep.join(info)
+                                                s.sendall(str(envio))
+                                            else:
+                                                bancodedados2 = open("mensagensoffline2.txt", 'a')
+                                                bancodedados2.write(linha)
+                                                bancodedados2.write('\n')
+                                                bancodedados2.close()
+                                            bancodedados.close()
+                                            os.remove('mensagensoffline.txt')
+                                            os.rename('mensagensoffline.txt', 'mensagensoffline2.txt')
                             except Exception:
                                 print('erro')
                 else:
@@ -67,8 +86,6 @@ def thread1():
             self.senha = senha
             self.email = email
 
-        def fecharsocket(self):
-            s.close()
 
         def fazercadastro(self):
             global nome, senha
@@ -356,13 +373,13 @@ def thread1():
             emailamigo = raw_input("Digite o email do amigo que quer mandar uma mensagem.\n")
             mensagem = raw_input("Digite sua mensagem\n")
             identificador = 'mensagemamigo'
-            l = []
-            l.append(identificador)
-            l.append(emailamigo)
-            l.append(mensagem)
+            info = []
+            info.append(identificador)
+            info.append(emailamigo)
+            info.append(mensagem)
             sep = ';'
-            info = sep.join(l)
-            s.sendall(str(info))
+            msg = sep.join(info)
+            s.sendall(str(msg))
             confirmacao = s.recv(1024)
             if confirmacao == 'naoagenda':
                 try:
@@ -384,7 +401,16 @@ def thread1():
                 print ('Mensagem enviada.\n')
                 u.menu2()
             if confirmacao == 'amigooffline':
-                print ('Amigo offline, quando ele entrar ele reseberá sua mensagem.\n')
+                print ('Amigo offline, quando vocês dois estiverem online a mensagem será encaminha à ele.\n')
+                bancodedados = open('mensagensoffline.txt', 'a')
+                bancodedados.write(nome)
+                bancodedados.write(senha)
+                bancodedados.write(emailamigo)
+                bancodedados.write(msg)
+                bancodedados.write('\n')
+                bancodedados.close()
+            if confirmacao == 'naocadastrado':
+                print('Não existe ninguém com esse email cadastrado no sistema.\n')
                 u.menu2()
 
         def mensagemgrupo(self):
@@ -418,8 +444,24 @@ def thread1():
                 print (
                 'Todos os membros do grupo que estão online receberam e quem está offline irá ver quando entrar na conta.\n')
                 u.menu2()
+            if confirmacao == 'naoexiste':
+                try:
+                    print('Esse grupo não existe.\n')
+                    print ("Digite 1 para fazer tentar novamente.\n")
+                    print ("Digite 2 para criar um grupo novo.\n")
+                    print ("Digite outro valor para voltar ao menu principal.\n")
+                    decisao2 = raw_input("\n")
+                    if (int(decisao2) != 1) and (int(decisao2) != 2):
+                        raise
+                    if int(decisao2) == 1:
+                        u.mensagemgrupo()
+                    if int(decisao2) == 2:
+                        u.criargrupo()
+                except Exception:
+                    u.menu2()
 
         def excluirconta(self):
+            global login
             try:
                 print ('Tem certeza que deseja excluir sua conta?')
                 print ("Digite sim sair.\n")
@@ -440,6 +482,7 @@ def thread1():
                     s.sendall(str(info))
                     confirmacao = s.recv(1024)
                     if confirmacao == 'ok':
+                        login = 0
                         print ('Você excluiu sua conta.\n')
                         u.menu1()
                 if str(decisao2) == 'senhaerrada':
@@ -472,6 +515,7 @@ def thread1():
             except Exception:
                 print('erro')
                 u.menu2()
+
         def menu1(self):
             try:
                 print ("Digite:\n")
@@ -486,7 +530,9 @@ def thread1():
                 if int(decisao) == 2:
                     u.fazercadastro()
                 if int(decisao) == 3:
-                    u.fecharsocket()
+                    s.sendall('fecharsocket')
+                    s.close()
+                    print('Você fechou a conexão.\n')
             except Exception:
                 print ("opcao invalida, tente novamente.\n")
                 u.menu1()
@@ -498,7 +544,7 @@ def thread1():
                 print ("2 para conversar com um amigo.\n")   #ok
                 print ("3 para criar um grupo.\n")  # ok
                 print ("4 para conversar com um grupo.\n")
-                print ('5 para adicionar um contato à um grupo.\n')  # ok
+                print ('5 para adicionar um contato à um grupo.\n')   #ok
                 print ('6 para excluir um grupo que você criou.\n')  # ok
                 print ("7 para sair da sua conta.\n")  # ok
                 print ("8 para mandar um arquivo para um amigo.\n")
@@ -542,9 +588,12 @@ def thread1():
 
 
 if __name__ == '__main__':
-    global nome, senha, login
+    global nome, senha, login, mensagemoffline, dictonline
+    mensagemoffline= []
+    dictonline = {}
+    a = open("mensagensoffline.txt", 'a')
+    a.close()
     t1 = Thread(target=thread1, args=())
     t1.start()
     t2 = Thread(target=thread2, args=())
     t2.start()
-
