@@ -41,47 +41,41 @@ def thread4():
                                 mensagem[:] = dados.split(';')
                                 if mensagem[0] == 'contatooffline':
                                     todosoffline[mensagem[1]] = 'sim'
-                                    j = 0
                                     sleep(2)
                                     bancodedados = open("mensagensofflinegrupo.txt", 'r')
                                     bancodedados3 = open('mensagensofflinegrupo2.txt', 'w')
                                     bancodedados3.close()
+                                    contador3 = 0
                                     for linha in bancodedados:
                                         linha = linha.strip("\n")
                                         grupo = []
                                         grupo[:] = linha.split(';')
-                                        if emailamigo2 == mensagem[1] == email2 and email1 == email:
-                                            j = j + 1
-                                            info = []
-                                            info.append(identificador)  # identificador de mensagem offline
-                                            info.append(emailamigo2)  # emailamigo
-                                            info.append(msg)          # mensagem
-                                            sep = ';'
-                                            envio = sep.join(info)
-                                            s.sendall(str(envio))
-                                            print(envio)
-                                            confirmacao2 = s.recv(1024)
-                                            if confirmacao2 == 'ok':
-                                                print('seu amigo ' + mensagem[1] + ' está online e sua mesagem foi encaminhada à ele.\n')
-                                        else:
+                                        numerodeusuarios = len(grupo) - 4
+                                        contador = 4
+                                        contador2 = 0
+                                        while contador < len(grupo):
+                                            if todosoffline.has_key(grupo[contador]):
+                                                contador2 = contador2 + 1
+                                        if contador2 == numerodeusuarios:
+                                            contador3 = contador3 + 1
                                             bancodedados2 = open("mensagensofflinegrupo2.txt", 'a')
                                             info = []
-                                            info.append(email)  # emailusuario
-                                            info.append(mensagem[1])  # emailcontato
-                                            info.append(msg)  # mensagem
+                                            info.append(grupo[0])  # emailusuario
+                                            info.append(grupo[1])  # emailcontato
+                                            info.append(grupo[3])  # mensagem
                                             sep = ';'
                                             envio = sep.join(info)
                                             bancodedados2.write(envio)
                                             bancodedados2.write('\n')
                                             bancodedados2.close()
                                     bancodedados.close()
-                                    if j != 0:
+                                    if contador3 != 0 :
                                         try:
                                             os.remove('mensagensofflinegrupo.txt')
                                             os.rename('mensagensofflinegrupo2.txt', 'mensagensofflinegrupo.txt')
                                         except Exception:
                                             print('nao atualizou o txt')
-                                    if j == 0:
+                                    if contador3 == 0:
                                         os.remove('mensagensofflinegrupo2.txt')
                                 if not dados: break
                             except Exception:
@@ -643,15 +637,14 @@ def thread1():
                     while p < len(retorno):
                         guardar.append(retorno[p])
                         p = p + 1
-                    print 'guardar = '+ guardar
+                    print 'guardar = '+ str(guardar)
                     sep = ';'
                     guardar2 = sep.join(guardar)
-                    print 'guardar2 = ' +guardar2
+                    print guardar2
                     bancodedados = open('mensagensofflinegrupo.txt', 'a')
                     bancodedados.write(guardar2)
                     bancodedados.write('\n')
                     bancodedados.close()
-                    u.menu2()
 
         def excluirconta(self):
             global login
@@ -712,41 +705,54 @@ def thread1():
                 print('erro')
                 u.menu2()
 
-        def enviarlistadecontatos(self):
-            t = raw_input('Digite a quantidade de contatos.\n')
-            cont = 1
-            while cont < t + 1:
-                contato = raw_input('Digite o email do ' + str(cont) + ' contato.\n')
-                l.append(contato)
-                cont = cont + 1
-            sep = ';'
-            info = sep.join(l)
-            bancodedados = open('adicionarcontatos.txt', 'w')
-            bancodedados.close()
-            bancodedados2 = open('adicionarcontatos.txt', 'a')
-            bancodedados2.write(info)
-            bancodedados2.write('\n')
-            file = open('adicionarcontatos.txt', 'rb')
-            tamanho = os.path.getsize('adicionarcontatos.txt')
-            offset = 0
-            while True:
-                envio = sendfile(s.fileno(), file.fileno(), offset, tamanho)
-                if envio == 0:
-                    break
-                offset = offset + envio
-            try:
-                confirmacao = s.recv(1024)
-                if confirmacao == 'ok':
-                    print 'Arquivo enviado.\n'
-                    u.menu2()
-            except Exception:
-                print('erro')
-
         def adicionarvarioscontatos(self):
             s.sendall('adicionarcontatos')
             confirmacao = s.recv(1024)
             if confirmacao == 'ok':
-                u.enviarlistadecontatos()
+                t = raw_input('Digite a quantidade de contatos.\n')
+                cont = 1
+                l = []
+                while cont < int(t) + 1:
+                    contato = raw_input('Digite o email do ' + str(cont) + ' contato.\n')
+                    l.append(contato)
+                    cont = cont + 1
+                sep = ';'
+                info = sep.join(l)
+                bancodedados = open('adicionarcontatos.txt', 'w')
+                bancodedados.close()
+                bancodedados2 = open('adicionarcontatos.txt', 'a')
+                bancodedados2.write(info)
+                bancodedados2.write('\n')
+                try:
+                    while True:
+                        fUploadFile = open('adicionarcontatos.txt', "rb")
+                        sRead = fUploadFile.read(1024)
+                        while sRead:
+                            s.send(sRead)
+                            sRead = fUploadFile.read(1024)
+                        print "TXT enviado"
+                        break
+                except Exception:
+                    print 'erro ao enviar lista de contatos para adicionar à agenda.\n'
+                print 'Todos esses contatos agora estão na sua agenda.\n'
+                u.menu2()
+
+        def sairdegrupo(self):
+            decisao = raw_input('Sair de qual grupo?')
+            info = []
+            info.append(decisao)
+            try:
+                confirmacao = s.recv(1024)
+                if confirmacao == 'ok':
+                    print ('Você saiu da sua conta.\n')
+                    print('a Conexão foi fechada.\n')
+                if confirmacao == 'não':
+                    print ('Voce nao faz parte do grupo.\n')
+                    u.menu2()
+            except Exception:
+                print('erro')
+                u.menu2()
+
 
         def menu1(self):
             try:
@@ -783,10 +789,11 @@ def thread1():
                 print ("9 para mandar um arquivo para um grupo.\n")
                 print ("10 para excluir sua conta.\n")                #erro em excluir de grupo
                 print ('Digite 11 para adiconar vários contatos à sua agenda.\n')
+                print('12 para sair do grupo.\n')
                 decisao = raw_input("\n")
                 if (int(decisao) != 1) and (int(decisao) != 2) and (int(decisao) != 3) and (int(decisao) != 4) and (
                     int(decisao) != 5) and (int(decisao) != 6) and (int(decisao) != 7) and (int(decisao) != 8) and (
-                    int(decisao) != 9) and (int(decisao) != 10) and (int(decisao) != 11):
+                    int(decisao) != 9) and (int(decisao) != 10) and (int(decisao) != 11) and (int(decisao) != 12):
                     raise
                 if int(decisao) == 1:
                     u.adicionarcontato()
@@ -810,6 +817,8 @@ def thread1():
                     u.excluirconta()
                 if int(decisao) == 11:
                     u.adicionarvarioscontatos()
+                if int(decisao) == 12:
+                    u.sairdegrupo()
             except Exception:
                 print ("opcao invalida, tente novamente")
                 u.menu2()
